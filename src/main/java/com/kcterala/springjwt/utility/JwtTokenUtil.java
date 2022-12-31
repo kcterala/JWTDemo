@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.function.Function;
@@ -20,6 +21,8 @@ public class JwtTokenUtil implements Serializable {
 
     @Value("${jwt.secret}")
     private String SIGNING_KEY;
+
+
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -35,10 +38,8 @@ public class JwtTokenUtil implements Serializable {
     }
 
     private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(SIGNING_KEY)
-                .parseClaimsJws(token)
-                .getBody();
+        System.out.println("------------------------------ " +SIGNING_KEY);
+        return Jwts.parser().setSigningKey(SIGNING_KEY.getBytes(Charset.forName("UTF-8"))).parseClaimsJws(token.replace("{", "").replace("}","")).getBody();
     }
 
     private Boolean isTokenExpired(String token) {
@@ -51,7 +52,7 @@ public class JwtTokenUtil implements Serializable {
     }
 
     private String doGenerateToken(String subject) {
-
+        System.out.println("------------------------------ " +SIGNING_KEY);
         Claims claims = Jwts.claims().setSubject(subject);
         claims.put("scopes", Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN")));
 
@@ -59,7 +60,7 @@ public class JwtTokenUtil implements Serializable {
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY_SECONDS*1000))
-                .signWith(SignatureAlgorithm.HS512, SIGNING_KEY)
+                .signWith(SignatureAlgorithm.HS512, SIGNING_KEY.getBytes(Charset.forName("UTF-8")))
                 .compact();
     }
 
